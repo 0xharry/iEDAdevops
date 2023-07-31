@@ -1,14 +1,14 @@
 set -e
 
 # variables
-IEDA_WORKSPACE=$(cd "$(dirname "$0")/../..";pwd)
-DOCKERFILE_DIR=${IEDA_WORKSPACE}/scripts/docker
+IEDA_WORKSPACE="git@gitee.com:ieda-ipd/iEDA.git#master"
+DOCKERFILE_DIR=$(cd "$(dirname "$0")";pwd)
 REMOTE_ID=iedaopensource
 
 push_tag()
 {
-  docker tag $1 $2
-  # docker push $2
+  echo "docker tag $1 $2"
+  docker push $2
 }
 
 update_img()
@@ -22,6 +22,7 @@ update_img()
 
   if [[ ${#BASE_IMAGE} != 0 ]] ; then
     docker build \
+    --ssh default=$HOME/.ssh/id_rsa \
     --build-arg BASE_IMAGE="${BASE_IMAGE}" \
     --build-arg RELEASE_IMAGE="${RELEASE_IMAGE}" \
     --build-arg IEDA_REPO="${IEDA_WORKSPACE}" \
@@ -30,6 +31,7 @@ update_img()
     "${DOCKERFILE_DIR}"
   else
     docker build \
+    --ssh default=$HOME/.ssh/id_rsa \
     --build-arg IEDA_REPO="${IEDA_WORKSPACE}" \
     --tag   ${IMG_TAG} \
     --file  ${DOCKERFILE_DIR}/${DOCKERFILE} \
@@ -44,10 +46,11 @@ update_img()
   fi
 }
 
+echo "build images from $IEDA_WORKSPACE"
 update_img base:latest    Dockerfile.base
-# update_img base:ubuntu    Dockerfile.base ubuntu:20.04
-# update_img release:latest Dockerfile.release
-# update_img release:ubuntu Dockerfile.release iedaopensource/base:ubuntu ubuntu:20.04
+update_img base:ubuntu    Dockerfile.base ubuntu:20.04
+update_img release:latest Dockerfile.release
+update_img release:ubuntu Dockerfile.release iedaopensource/base:ubuntu ubuntu:20.04
 
 #   # =========== update iedaopensource/demo:gcd ===========
 #   docker build --no-cache \
